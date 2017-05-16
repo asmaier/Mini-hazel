@@ -16,7 +16,7 @@ import static org.junit.Assert.assertNull;
  */
 public class HazelIT {
 
-    private HazelcastInstance hazel;
+    private HazelcastInstance hazelCluster;
 
     @Before
     public void setUp() {
@@ -27,7 +27,7 @@ public class HazelIT {
         NetworkConfig network = config.getNetworkConfig();
         network.getJoin().getTcpIpConfig().setEnabled(false);
         network.getJoin().getMulticastConfig().setEnabled(false);
-        hazel = Hazelcast.newHazelcastInstance(config);
+        hazelCluster = Hazelcast.newHazelcastInstance(config);
     }
 
     @Test
@@ -38,30 +38,30 @@ public class HazelIT {
         clientConfig.getNetworkConfig().addAddress("127.0.0.1");
 
         // first client writes data to Hazelcast cluster
-        HazelcastInstance client = HazelcastClient.newHazelcastClient(clientConfig);
+        HazelcastInstance hazelClient = HazelcastClient.newHazelcastClient(clientConfig);
 
-        IMap<String, String> map = client.getMap("strings");
+        IMap<String, String> map = hazelClient.getMap("strings");
 
         map.put("foo1", "bar1");
         map.put("foo1", "bar1_new");
         map.put("foo2", "bar2");
 
-        client.shutdown();
+        hazelClient.shutdown();
 
         // second client reads data from Hazelcast cluster
-        HazelcastInstance client2 = HazelcastClient.newHazelcastClient(clientConfig);
-        IMap<String, String> map2 = client2.getMap("strings");
+        HazelcastInstance hazelClient2 = HazelcastClient.newHazelcastClient(clientConfig);
+        IMap<String, String> map2 = hazelClient2.getMap("strings");
 
         assertEquals("bar1_new", map2.get("foo1"));
         assertEquals("bar2", map2.get("foo2"));
         assertNull(map2.get("foo"));
 
-        client2.shutdown();
+        hazelClient2.shutdown();
     }
 
     @After
     public void tearDown() {
-        hazel.shutdown();
+        hazelCluster.shutdown();
     }
 
 }
